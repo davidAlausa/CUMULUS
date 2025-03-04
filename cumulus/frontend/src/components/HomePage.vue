@@ -5,30 +5,51 @@
 </script>
 
 <template>
-  <body>
-    <div class="centered">
+  <div class="div-homepage">
+    <div class="gradient-background">
+      <div class="centered">
 
-      <h1>CUMULUS</h1><br>
+        <h1>CUMULUS</h1><br>
 
-      <small>Dedicated to making moving easy.</small>
+        <small>Dedicated To Making Moving Easy.</small>
 
-      <div class="pt-5">
-        <router-link to="test"><input class="hvrbtn hp-login-btn btn" type="button" value="Login"></router-link>
-          <router-link to="test"><input class="hvrbtn hp-signup-btn btn" type="button" value="Sign Up"></router-link>
+        <div class="pt-5">
+          <router-link to="signin"><input class="hvrbtn hp-login-btn btn" type="button" value="Login"></router-link>
+            <router-link to="signup"><input class="hvrbtn hp-signup-btn btn" type="button" value="Sign Up"></router-link>
+        </div>
+
+        <div class="hp-greenuc-btns pb-5 fixed-bottom d-flex justify-content-center">
+          <router-link to="test"><abbr title="Help Center"><span class="hvricn bi bi-question-circle-fill"></span></abbr></router-link>
+          <router-link to="contactus"><abbr title="Contact Us"><span class="hvricn bi bi-envelope-fill"></span></abbr></router-link>
+        </div>
+
       </div>
-
-      <div class="hp-greenuc-btns pb-5 fixed-bottom d-flex justify-content-center">
-        <router-link to="test"><span class="hvricn bi bi-question-circle-fill"></span></router-link>
-        <router-link to="test"><span class="hvricn bi bi-envelope-fill"></span></router-link>>
-      </div>
-
     </div>
-  </body>
+  </div>
 </template>
 
 <style scoped>
-  body {
+  .div-homepage {
     background-color: #057DCD;
+  }
+
+  /* Background HOMEPAGE */
+  .gradient-background {
+    background: linear-gradient(319deg,#0012e7,#009ee7,#753fd6,#590be7);
+    background-size: 240% 240%;
+    animation: gradient-animation 20s ease infinite;
+  }
+
+  @keyframes gradient-animation {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
   }
 
   .centered {
@@ -38,10 +59,12 @@
     align-items: center;
     height: 100vh;
   }
+
   h1 {
     font-size: 7em;
     color: #E8EEF1;
   }
+
   small {
     font-size: 1.5em;
     color: #43B0F1;

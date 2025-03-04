@@ -1,0 +1,38 @@
+
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.5s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
+}
+
+
+h1 {
+    font-family: "Roboto Light", Helvetica, sans-serif;
+}
+small {
+    font-family: "Open Sans", Helvetica, sans-serif;
+    letter-spacing: .75em;
+}
+input.btn {
+    border-radius: 10px;
+}
+
+.hvrbtn:hover {
+    background-color: #E8EEF1;
+    color: #1E3D58;
+}
+.hvricn:hover {
+    color: #E8EEF1;
+}
+
+.bi {
+    font-size:7em;
+}
+
+html, body {
+    height: 100%;
+    margin: 0;
+}
