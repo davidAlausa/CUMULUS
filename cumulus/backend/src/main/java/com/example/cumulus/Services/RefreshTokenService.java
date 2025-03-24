@@ -1,8 +1,10 @@
 package com.example.cumulus.Services;
 
+import com.example.cumulus.Configs.JWTUtil;
 import com.example.cumulus.DTOs.RefreshToken;
+import com.example.cumulus.Models.UserProfile;
 import com.example.cumulus.Repositories.RefreshTokenRepository;
-import com.example.cumulus.Repositories.UserDetailsRepository;
+import com.example.cumulus.Repositories.UserProfileRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -17,19 +19,28 @@ public class RefreshTokenService {
     private RefreshTokenRepository refreshTokenRepository;
 
     @Autowired
-    private UserDetailsRepository userDetailsRepository;
+    private UserProfileRepository userProfileRepository;
 
-    private static final long REFRESH_TOKEN_DURATION = 7 * 24 * 60 * 60; // 7 days in seconds
+    @Autowired
+    private JWTUtil jwtTokenUtil;
+
+    public static final long REFRESH_TOKEN_DURATION = 7 * 24 * 60 * 60; // 7 days
 
     public Mono<String> createRefreshToken(String email) {
-        return userDetailsRepository.findByEmail(email)
-                .flatMap(user -> {
-                    String token = UUID.randomUUID().toString();
+        return userProfileRepository.findByEmail(email)
+                .flatMap(userProfile -> {
+                    String refreshToken = jwtTokenUtil.generateRefreshToken(userProfile.getEmail());
                     Instant expiryDate = Instant.now().plusSeconds(REFRESH_TOKEN_DURATION);
 
-                    RefreshToken refreshToken = new RefreshToken(token, expiryDate, user);
-                    return refreshTokenRepository.save(refreshToken).map(RefreshToken::getToken);
-                });
+                    RefreshToken refreshTokenEntity = new RefreshToken(refreshToken, expiryDate, userProfile);
+
+                    System.out.println("Saving Refresh Token: " + refreshToken);
+
+                    return refreshTokenRepository.save(refreshTokenEntity)
+                            .map(savedToken -> {
+                                System.out.println("Saved Refresh Token in DB: " + savedToken.getToken());
+                                return savedToken.getToken();
+                            });                });
     }
 
     public Mono<Boolean> isValidRefreshToken(String token) {

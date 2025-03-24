@@ -1,5 +1,6 @@
 package com.example.cumulus.Configs;
 
+import io.jsonwebtoken.io.Decoders;
 import org.springframework.stereotype.Component;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -11,12 +12,24 @@ import java.util.Date;
 import java.util.function.Function;
 import java.util.Base64;
 
+import static com.example.cumulus.Services.RefreshTokenService.REFRESH_TOKEN_DURATION;
+
 @Component
 public class JWTUtil {
-//    private final String secret = "this_is_my_secret_key_this_is_my_secret_key"; // At least 256 bits for HS256
+
+    private final Key secretKey;
+    public JWTUtil() {
+        try {
+            byte[] keyBytes = Decoders.BASE64.decode("ZKAqSkeRdGd+phzJiJGRKgluaOX7ZxWsJdx4rUSXzgj6e/Pv9r1kw6M27sI/FVHV");
+            this.secretKey = Keys.hmacShaKeyFor(keyBytes);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to initialize JWTUtil", e);
+        }
+    }
+
 
     private Key getSigningKey() {
-        return Keys.secretKeyFor(SignatureAlgorithm.HS256);
+        return secretKey;
     }
 
     public String extractUsername(String token) {
@@ -44,8 +57,16 @@ public class JWTUtil {
         return Jwts.builder()
                 .setSubject(username)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 3)) // 3 min expiration
-                .signWith(getSigningKey(), SignatureAlgorithm.HS256) // Corrected method
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 10)) // 10 min expiration
+                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .compact();
+    }
+    public String generateRefreshToken(String email) {
+        return Jwts.builder()
+                .setSubject(email)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + REFRESH_TOKEN_DURATION * 1000))
+                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 

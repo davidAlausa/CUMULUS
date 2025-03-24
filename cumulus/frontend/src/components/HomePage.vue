@@ -33,7 +33,6 @@
     background-color: #057DCD;
   }
 
-  /* Background HOMEPAGE */
   .gradient-background {
     background: linear-gradient(319deg,#0012e7,#009ee7,#753fd6,#590be7);
     background-size: 240% 240%;

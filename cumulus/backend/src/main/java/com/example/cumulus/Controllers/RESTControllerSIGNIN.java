@@ -1,8 +1,9 @@
 package com.example.cumulus.Controllers;
 
-import com.example.cumulus.DTOs.UserDetails;
-import com.example.cumulus.Services.UserDetailsService;
+import com.example.cumulus.Models.UserProfile;
+import com.example.cumulus.Services.UserService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
@@ -12,13 +13,13 @@ import java.util.Map;
 @RequestMapping("/api/")
 public class RESTControllerSIGNIN {
 
-   private final UserDetailsService userDetailsService;
-    public RESTControllerSIGNIN(UserDetailsService userDetailsService) {
-        this.userDetailsService = userDetailsService;
+   private final UserService userService;
+    public RESTControllerSIGNIN(UserService userService) {
+        this.userService = userService;
     }
     @PostMapping("/signin")
-    public Mono<ResponseEntity<Map<String, String>>> handleSignIn(@RequestBody UserDetails request) {
-        return userDetailsService.findByEmail(request.getEmail())
+    public Mono<ResponseEntity<Map<String, String>>> handleSignIn(@RequestBody UserProfile request) {
+        return userService.findByEmail(request.getEmail())
                 .flatMap(userDetails -> {
                     if (userDetails.getPassword().equals(request.getPassword())) {
                         return Mono.just(ResponseEntity.ok(Map.of("message", "Sign-in successful!")));

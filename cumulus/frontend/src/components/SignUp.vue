@@ -39,7 +39,6 @@ export default {
         usage: this.usage,
       };
 
-      // console.log(formdata); //checking to see if it initialised properly
 
       fetch('http://localhost:8080/api/signup', {
         method: 'POST',
@@ -187,7 +186,7 @@ label {
   color: #1E3D58;
 }
 input, select {
-  width: 100%; /* Ensure inputs fill their columns */
+  width: 100%;
   padding: 10px;
   margin-top: 10px;
   box-sizing: border-box;

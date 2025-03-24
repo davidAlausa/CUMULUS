@@ -1,6 +1,6 @@
 package com.example.cumulus.DTOs;
 
-import com.example.cumulus.DTOs.UserDetails;
+import com.example.cumulus.Models.UserProfile;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -10,21 +10,21 @@ import java.time.Instant;
 public class RefreshToken {
 
     @Id
-    private String id; // Changed from Long to String
+    private String id;
     private String token;
     private Instant expiryDate;
-    private UserDetails user;
+    private UserProfile user;
 
     public RefreshToken() {}
 
-    public RefreshToken(String token, Instant expiryDate, UserDetails user) {
+    public RefreshToken(String token, Instant expiryDate, UserProfile user) {
         this.token = token;
         this.expiryDate = expiryDate;
         this.user = user;
     }
 
-    public String getId() { return id; } // Changed return type to String
+    public String getId() { return id; }
     public String getToken() { return token; }
     public Instant getExpiryDate() { return expiryDate; }
-    public UserDetails getUser() { return user; }
+    public UserProfile getUser() { return user; }
 }

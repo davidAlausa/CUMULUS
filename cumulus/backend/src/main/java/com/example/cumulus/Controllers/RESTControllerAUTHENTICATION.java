@@ -3,6 +3,7 @@ package com.example.cumulus.Controllers;
 import com.example.cumulus.Authentications.authenticationRequest;
 import com.example.cumulus.Authentications.authenticationResponse;
 import com.example.cumulus.Configs.JWTUtil;
+import com.example.cumulus.Repositories.RefreshTokenRepository;
 import com.example.cumulus.Services.RefreshTokenService;
 import com.example.cumulus.Services.TokenBlacklistService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +37,9 @@ public class RESTControllerAUTHENTICATION {
     @Autowired
     private TokenBlacklistService tokenBlacklistService;
 
+    @Autowired
+    private RefreshTokenRepository refreshTokenRepository;
+
     @PostMapping("/authenticate")
     public Mono<ResponseEntity<authenticationResponse>> createAuthenticationToken(@RequestBody authenticationRequest authenticationRequest) {
         return authenticationManager.authenticate(
@@ -51,7 +55,6 @@ public class RESTControllerAUTHENTICATION {
                             .map(refreshToken -> ResponseEntity.ok(new authenticationResponse(accessToken, refreshToken)));
                 })
                 .onErrorResume(e -> {
-                    // Return an empty authenticationResponse with 401 status
                     return Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new authenticationResponse(null, null)));
                 });
     }
@@ -66,16 +69,22 @@ public class RESTControllerAUTHENTICATION {
         if (refreshToken == null) {
             return Mono.just(ResponseEntity.status(401).body("Invalid or expired refresh token"));
         }
+        refreshTokenRepository.findAll().collectList()
+                .subscribe(tokens -> System.out.println("Stored Tokens: " + tokens));
+
         return refreshTokenService.isValidRefreshToken(refreshToken)
                 .flatMap(isValid -> {
                     if (!isValid) {
+                        System.out.println("Invalid or expired refresh token");
                         return Mono.just(ResponseEntity.status(401).body("Invalid or expired refresh token"));
                     }
+                    System.out.println("Refresh Token is valid");
                     return refreshTokenService.getUsernameFromToken(refreshToken)
                             .map(jwtTokenUtil::generateToken)
                             .map(newAccessToken -> ResponseEntity.ok(Map.of("accessToken", newAccessToken)));
                 });
     }
+
     @PostMapping("/logout")
     public Mono<ResponseEntity<?>> logout(@RequestHeader("Authorization") String accessToken, @RequestBody Map<String, String> request) {
         String refreshToken = request.get("refreshToken");

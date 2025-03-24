@@ -1,37 +1,53 @@
 package com.example.cumulus.Controllers;
 
 import com.example.cumulus.Configs.JWTUtil;
-import com.example.cumulus.Services.UserDetailsService;
+import com.example.cumulus.Services.UserService;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.server.reactive.ServerHttpRequest;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @RestController
-@RequestMapping("/loggedin/api/")
+@RequestMapping("/api/loggedin/")
 public class RESTControllerUSERDASHBOARD {
-    private final UserDetailsService userDetailsService;
+    private final UserService userService;
     private final JWTUtil jwtTokenUtil;
-    public RESTControllerUSERDASHBOARD(UserDetailsService userDetailsService, JWTUtil jwtTokenUtil) {
-        this.userDetailsService = userDetailsService;
+    public RESTControllerUSERDASHBOARD(UserService userService, JWTUtil jwtTokenUtil) {
+        this.userService = userService;
         this.jwtTokenUtil = jwtTokenUtil;
     }
     @GetMapping("/user")
-    public Mono<ResponseEntity<String>> getName(ServerHttpRequest request) {
-
-        return Mono.justOrEmpty(request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION)) // Extract token
-                .filter(authHeader -> authHeader.startsWith("Bearer ")) // Ensure it's a Bearer token
-                .map(authHeader -> authHeader.substring(7)) // Remove "Bearer "
-                .flatMap(token -> Mono.justOrEmpty(jwtTokenUtil.extractUsername(token))) // Wrap in Mono
-                .flatMap(userDetailsService::findByUsername) // Find user by username
-                .cast(com.example.cumulus.DTOs.UserDetails.class) // Ensure correct DTO
-                .map(user -> ResponseEntity.ok(user.getFirstName())) // Return first name
-                .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()); // Return 401 if user not found
+    public Mono<ResponseEntity<Map<String, String>>> getName(ServerHttpRequest request) {
+        return Mono.justOrEmpty(request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION))
+                .filter(authHeader -> authHeader.startsWith("Bearer "))
+                .map(authHeader -> authHeader.substring(7))
+                .flatMap(token -> {
+                    try {
+                        return Mono.justOrEmpty(jwtTokenUtil.extractUsername(token));
+                    } catch (io.jsonwebtoken.ExpiredJwtException e) {
+                        System.out.println("JWT is expired: " + e.getMessage());
+                        return Mono.empty();
+                    }
+                })
+                .flatMap(userService::findByUsername)
+                .flatMap(user -> userService.findByEmail(user.getUsername()))
+                .map(userProfile -> {
+                    Map<String, String> response = new HashMap<>();
+                    response.put("firstName", userProfile.getFirstName());
+                    return ResponseEntity.ok(response);
+                })
+                .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }
+
+
 
 
 

@@ -25,8 +25,8 @@ public class OpenAIAPIService {
         this.webClient = webClientBuilder.baseUrl(apiUrl).build();
     }
 
-    public Mono<ChatGPTResponse> chatWithGPT(String prompt) {
-        ChatGPTRequest request = new ChatGPTRequest("gpt-3.5-turbo", List.of(new Message("user", prompt)));
+    public Mono<ChatGPTResponse> chatWithGPT(List<Message> messages) {
+        ChatGPTRequest request = new ChatGPTRequest("gpt-3.5-turbo", messages);
 
         return webClient.post()
                 .uri(apiUrl)
@@ -36,4 +36,17 @@ public class OpenAIAPIService {
                 .retrieve()
                 .bodyToMono(ChatGPTResponse.class);
     }
+
+    public Mono<ChatGPTResponse> assessWithGPT(List<Message> messages) {
+        ChatGPTRequest request = new ChatGPTRequest("gpt-3.5-turbo", messages);
+
+        return webClient.post()
+                .uri(apiUrl)
+                .header("Authorization", "Bearer " + apiKey)
+                .header("Content-Type", "application/json")
+                .bodyValue(request)
+                .retrieve()
+                .bodyToMono(ChatGPTResponse.class);
+    }
+
 }

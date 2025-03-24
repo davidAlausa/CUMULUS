@@ -19,7 +19,7 @@ public class RESTControllerTEST {
     }
     @PostMapping("/getgptresponse")
     public Mono<ChatGPTResponse> chat(@RequestBody ChatGPTRequest request) {
-        return openAIAPIService.chatWithGPT(request.getMessages().get(0).getContent());
+        return openAIAPIService.chatWithGPT(request.getMessages());
     }
 
     @GetMapping("/getrequest")

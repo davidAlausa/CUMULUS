@@ -6,8 +6,8 @@ export default {
   },
   data() {
     return {
-      monkeyImage: null, // The image URL will be stored here
-      gptResponse: "", // The GPT response will be stored here
+      monkeyImage: null,
+      gptResponse: "",
     };
   },
   methods: {
@@ -33,7 +33,7 @@ export default {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            model: "gpt-3.5-turbo",  // Match what Spring Boot expects
+            model: "gpt-3.5-turbo",
             messages: [
               { role: "user", content: input }
             ]
@@ -44,8 +44,8 @@ export default {
           throw new Error("Failed to fetch GPT response");
         }
 
-        const data = await response.json(); // Read response as JSON
-        this.gptResponse = data.choices[0].message.content; // Extract GPT response
+        const data = await response.json();
+        this.gptResponse = data.choices[0].message.content;
       } catch (error) {
         console.error("Error sending chatGPT prompt:", error);
       }
@@ -65,7 +65,6 @@ export default {
   <h2>TestingGetRequestFromBackend</h2>
   <button @click="fetchMonkeyImage">Fetch Monkey Image</button>
 
-  <!-- Display the image if fetched -->
   <div v-if="monkeyImage">
     <h2>Here's your monkey!</h2>
     <img :src="monkeyImage" alt="Monkey Image" style="width: 10%"/>

@@ -36,7 +36,7 @@ public class WebSecurityConfig {
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(exchange -> exchange
                         .pathMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .pathMatchers("api/session/authenticate", "/logout", "/refresh-token", "/api/signup", "/contactus", "/loggedin/api/**", "api/test/getgptresponse").permitAll()
+                        .pathMatchers("api/session/authenticate", "/logout", "/api/session/refresh-token", "/api/signup", "/contactus", "/api/loggedin/user", "api/test/getgptresponse", "api/assess-workstream").permitAll()
                         .pathMatchers("/reports/**", "/admin/**").hasRole("ADMIN")
                         .pathMatchers("/documents/**").hasRole("ADMIN")
                         .pathMatchers("/content/**").hasAnyRole("CUSTOMER", "ADMIN")
@@ -56,14 +56,14 @@ public class WebSecurityConfig {
     public ReactiveAuthenticationManager reactiveAuthenticationManager() {
         UserDetailsRepositoryReactiveAuthenticationManager authManager =
                 new UserDetailsRepositoryReactiveAuthenticationManager(userDetailsService);
-        authManager.setPasswordEncoder(passwordEncoder()); // Use encoder for password verification
+        authManager.setPasswordEncoder(passwordEncoder());
         return authManager;
     }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration corsConfig = new CorsConfiguration();
-        corsConfig.setAllowedOrigins(List.of("http://localhost:3000")); // Change to your frontend URL
+        corsConfig.setAllowedOrigins(List.of("http://localhost:3000"));
         corsConfig.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         corsConfig.setAllowedHeaders(List.of("*"));
         corsConfig.setAllowCredentials(true);

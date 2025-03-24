@@ -1,8 +1,9 @@
 package com.example.cumulus.Controllers;
 
-import com.example.cumulus.DTOs.UserDetails;
-import com.example.cumulus.Services.UserDetailsService;
+import com.example.cumulus.Models.UserProfile;
+import com.example.cumulus.Services.UserService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
@@ -12,18 +13,18 @@ import java.util.Map;
 @RequestMapping("/api/")
 public class RESTControllerSIGNUP {
 
-    private final UserDetailsService userDetailsService;
-    public RESTControllerSIGNUP(UserDetailsService userDetailsService) {
-        this.userDetailsService = userDetailsService;
+    private final UserService userService;
+    public RESTControllerSIGNUP(UserService userService) {
+        this.userService = userService;
     }
 
 
     @PostMapping("/signup")
-    public Mono<ResponseEntity<Map<String, String>>> handleSignUp(@RequestBody UserDetails request) {
+    public Mono<ResponseEntity<Map<String, String>>> handleSignUp(@RequestBody UserProfile request) {
 
         if (request.getPassword().equals(request.getRetypePassword())) {
             try {
-                return userDetailsService.createUser(request)
+                return userService.createUser(request)
                         .thenReturn(ResponseEntity.ok(Map.of("message", "Sign-up successful!")));
             }
             catch (Exception e) {

@@ -111,12 +111,12 @@ label {
   background-color: #43B0F1;
   color: #1E3D58;
 }
-.pt-3, .forgot-password{
+.pt-3{
   padding-top: 1rem;
   text-align: center;
 }
 
-input, .si-reset-password {
+input {
   color: #43B0F1;
 }
 </style>
