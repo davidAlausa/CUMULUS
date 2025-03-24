@@ -34,5 +34,36 @@ A web application designed to help small to medium-sized businesses transition t
 - **API Endpoint:** `/api/signin` -- Signs in the registered user and assigns a JWT token 
 - **API Endpoint:** `/api/signup` -- Saves the inputted user details to the database.
  
+## **How to Run the Project (From Scratch)**
+
+### **Prerequisites:**
+- **Java 17 or higher** (for Spring Boot)
+- **Node.js 18 or higher** (for Vue.js)
+- **Maven** (for dependency management)
+- **Git** (for cloning the repository)
+
+---
+
+### **1. Clone the Repository:**
+```bash
+git clone https://github.com/your-repo-name.git
+cd your-repo-name
+
+### **2. Navigate to the backend folder:**
+```bash
+cd backend
+./mvnw clean install
+./mvnw spring-boot:run
+
+
+### **3. Open a new terminal and navigate to the frontend folder:**
+```bash
+cd frontend
+npm install
+npm run dev
+
+### **4. Open your browser and navigate to:**
+```bash
+http://localhost:5173
 
 
