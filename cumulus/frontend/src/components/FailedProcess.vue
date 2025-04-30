@@ -31,13 +31,7 @@
 
 <style scoped>
 .container-fluid {
-  background-color: #DBEBED;
-}
-h1{
-  font-size: 5em;
-  color: #047076;
-  text-align: center;
-  margin-top: 1em;
+  background-color: #43B0F1;
 }
 .centered {
   display: flex;
@@ -49,9 +43,5 @@ h1{
 
 .row{
   height: 0;
-}
-
-.bi{
-  color: #047076;
 }
 </style>

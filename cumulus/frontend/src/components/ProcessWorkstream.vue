@@ -1,6 +1,4 @@
 <script>
-import {fetchWithAuth} from "@/utils/api";
-
 export default {
   name: 'ProcessWorkstream',
   data() {
@@ -8,34 +6,27 @@ export default {
     const formdata = this.$route.query.data ? JSON.parse(decodeURIComponent(this.$route.query.data)) : {};
 
     return {
-      processState: "Choosing Cloud Provider...",
+      processState: "Assessing Workstream",
       workstreamData: {},
       inputData: formdata || {},
-      attributeIds: {},
-      providerScore: {},
       buffering: true,
       workstreamID: "",
 
+
   };
   },
-  async mounted() {
-
-    try {
-      await fetchWithAuth('http://localhost:8080/api/loggedin/user');
-    } catch (error) {
-      console.error('Error validating your token. Please log in again', error);
-    }
-
-    fetch('http://localhost:8080/api/process-workstream', {
+  mounted() {
+    fetch('http://localhost:8080/api/assess-workstream', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + localStorage.getItem('accessToken')
       },
-      body: JSON.stringify({ questions: this.inputData }),
+      body: JSON.stringify({ ...this.inputData }),
       credentials: 'include',
     })
         .then(response => {
+          console.log("This was what was sent to the back end to assess:", this.inputData);
+
           if (!response.ok) {
             throw new Error('Failed to assess workstream');
           }
@@ -43,23 +34,39 @@ export default {
         })
         .then(data => {
           try {
-            this.providerScore = data['providerScores'];
-            this.attributeIds = data['attributeIds'];
-            this.saveWorkstream();
 
+            console.log("Data from backend:", data);
+
+            this.migrationPlanner = JSON.parse(data.migrationPlanner).migrationPlanner;
+            this.assessmentModule = JSON.parse(data.assessmentModule).assessmentModule;
+            this.justification = JSON.parse(data.justification).justification;
+            this.costEstimator = JSON.parse(data.costEstimator).costEstimator;
+
+            console.log("Assessment Module:", this.assessmentModule);
+            console.log("Cost Estimator:", this.costEstimator);
+            console.log("Migration Planner:", this.migrationPlanner);
+            console.log("Justification:", this.justification);
+
+            this.workstreamData = {
+              assessmentModule: this.assessmentModule,
+              costEstimator: this.costEstimator,
+              migrationPlanner: this.migrationPlanner,
+              justification: this.justification,
+            };
+
+            this.processWorkstream();
           } catch (error) {
-            this.$router.push({
-              name: 'FailedProcess',
-              query: { data: encodeURIComponent(JSON.stringify({ message: "Failed To Assess Workstream. Please Try Again." })) }
-            });
+            console.error("Error parsing JSON:", error);
+            throw new Error("Failed to parse backend response.");
           }
         })
         .catch(error => {
+          console.error('Error submitting form:', error);
           this.$router.push({
             name: 'FailedProcess',
             query: {
               data: encodeURIComponent(
-                  JSON.stringify({ message: "Failed To Assess Workstream. Please Try Again." + error.message })
+                  JSON.stringify({ message: "Failed To Assess Workstream. Please Try Again." })
               ),
             },
           });
@@ -67,16 +74,16 @@ export default {
   },
 
   methods:{
-    saveWorkstream() {
+    processWorkstream() {
       this.processState = "Saving Workstream";
 
-      fetch('http://localhost:8080/api/save-inputs', {
+      fetch('http://localhost:8080/api/process-workstream', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ' + localStorage.getItem('accessToken')
         },
-        body: JSON.stringify( {providerScore: this.providerScore, attributeIds: this.attributeIds, questions: this.inputData} ),
+        body: JSON.stringify(this.workstreamData),
       })
           .then( response => {
             if (!response.ok) {
@@ -85,7 +92,9 @@ export default {
             return response.json();
           })
           .then(data => {
-            this.workstreamID = data.id ? data.id : "";
+            console.log("This was the workstream data that was sent to the backend to be saved", JSON.stringify(this.workstreamData));
+            console.log("Workstream processed:", data)
+            this.workstreamID = data.workstreamID ? data.workstreamID : "";
             this.saveInputs()
           })
           .catch(error => {
@@ -98,31 +107,43 @@ export default {
     },
 
     saveInputs() {
-      this.processState = "Learning From Inputs";
+      this.processState = "Saving Inputs";
 
-      fetch('http://localhost:8080/api/evolve-question-list', {
-        method: 'GET',
+      const inputContent = this.inputData.messages[0]?.content || "{}";
+      const parsedInputData = JSON.parse(inputContent);
+
+
+      console.log("Saving inputs:", this.inputData);
+
+      fetch('http://localhost:8080/api/save-inputs', {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ' + localStorage.getItem('accessToken')
-        }
+        },
+        body: JSON.stringify({
+          workstreamID: this.workstreamID,
+          ...parsedInputData
+        })
       })
           .then(response => response.json())
           .then(data => {
-            if (!data.success) {
-              throw new Error('Failed to learn from inputs' + data.message);
-            }
+            console.log("Inputs saved:", data);
             this.redirectAM();
           })
           .catch(error => {
-            console.error('Error Learning From Inputs:', error);
-            this.redirectAM();
+            console.error('Error saving inputs:', error);
+            this.$router.push({
+              name: 'FailedProcess',
+              query: { data: encodeURIComponent(JSON.stringify({ message: "Failed To Save Inputs. Please Try Again." })) }
+            });
           });
     },
 
     redirectAM(){
+      console.log("This is the workstreamID that is now being pushed to the next page AM: ", this.workstreamID);
       this.$router.push({
-        name: 'ViewAssessment',
+        name: 'AssessmentModule',
         query: { data: encodeURIComponent(JSON.stringify({ workstreamID: this.workstreamID })) }
       });
     },
@@ -142,7 +163,7 @@ export default {
 
 <style scoped>
 .container-fluid {
-  background-color: #DBEBED;
+  background-color: rgba(234, 208, 206, 0.98);
 }
 
 .centered {
@@ -165,7 +186,7 @@ export default {
 }
 h1 {
   font-size: 4em;
-  color: #047076;
+  color: #e43d40;
   text-align: center;
 }
 

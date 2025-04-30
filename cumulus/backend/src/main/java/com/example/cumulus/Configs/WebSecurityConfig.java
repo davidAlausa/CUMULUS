@@ -36,7 +36,7 @@ public class WebSecurityConfig {
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(exchange -> exchange
                         .pathMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .pathMatchers("api/session/authenticate", "/logout", "/api/session/refresh-token", "/api/signup", "/contactus", "/api/loggedin/user", "api/test/getgptresponse", "api/assess-workstream", "api/test/initialiseResources", "/api/test/getrequest", "/api/contactus/sendemail").permitAll()
+                        .pathMatchers("api/session/authenticate", "/logout", "/api/session/refresh-token", "/api/signup", "/contactus", "/api/loggedin/user", "api/test/getgptresponse", "api/assess-workstream").permitAll()
                         .pathMatchers("/reports/**", "/admin/**").hasRole("ADMIN")
                         .pathMatchers("/documents/**").hasRole("ADMIN")
                         .pathMatchers("/content/**").hasAnyRole("CUSTOMER", "ADMIN")

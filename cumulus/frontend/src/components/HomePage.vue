@@ -21,7 +21,6 @@
         <div class="hp-greenuc-btns pb-5 fixed-bottom d-flex justify-content-center">
           <router-link to="test"><abbr title="Help Center"><span class="hvricn bi bi-question-circle-fill"></span></abbr></router-link>
           <router-link to="contactus"><abbr title="Contact Us"><span class="hvricn bi bi-envelope-fill"></span></abbr></router-link>
-          <router-link to="test"><abbr title="Test Page"><span class="hvricn bi bi-gear-wide-connected"></span></abbr></router-link>
         </div>
 
       </div>

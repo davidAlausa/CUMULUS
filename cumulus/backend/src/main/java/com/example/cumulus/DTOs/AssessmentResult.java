@@ -1,36 +1,28 @@
 package com.example.cumulus.DTOs;
 
-import com.example.cumulus.Entities.Resource;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.Instant;
-import java.util.List;
 
 
+@Document(collection = "assessmentResults")
 public class AssessmentResult {
-
-    private String CloudProvider;
-    private String ProviderDescription;
+    @Id
+    private String id;
+    private String userID;
+    private Instant dateAssessed;
+    private AssessmentModule assessmentModule;
     private CostEstimator costEstimator;
     private MigrationPlanner migrationPlanner;
-    private String justification;
+    private Justification justification;
 
-
-    public String getCloudProvider() {
-        return CloudProvider;
+    public String getId() {
+        return id;
     }
 
-    public void setCloudProvider(String cloudProvider) {
-        CloudProvider = cloudProvider;
-    }
-
-    public String getProviderDescription() {
-        return ProviderDescription;
-    }
-
-    public void setProviderDescription(String providerDescription) {
-        ProviderDescription = providerDescription;
+    public void setId(String id) {
+        this.id = id;
     }
 
     public CostEstimator getCostEstimator() {
@@ -49,11 +41,35 @@ public class AssessmentResult {
         this.migrationPlanner = migrationPlanner;
     }
 
-    public String getJustification() {
+    public Instant getDateAssessed() {
+        return dateAssessed;
+    }
+
+    public void setDateAssessed(Instant dateAssessed) {
+        this.dateAssessed = dateAssessed;
+    }
+
+    public String getUserID() {
+        return userID;
+    }
+
+    public void setUserID(String userID) {
+        this.userID = userID;
+    }
+
+    public AssessmentModule getAssessmentModule() {
+        return assessmentModule;
+    }
+
+    public void setAssessmentModule(AssessmentModule assessmentModule) {
+        this.assessmentModule = assessmentModule;
+    }
+
+    public Justification getJustification() {
         return justification;
     }
 
-    public void setJustification(String justification) {
+    public void setJustification(Justification justification) {
         this.justification = justification;
     }
 }

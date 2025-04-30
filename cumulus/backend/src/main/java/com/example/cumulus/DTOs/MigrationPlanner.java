@@ -1,14 +1,13 @@
 package com.example.cumulus.DTOs;
 
-import com.example.cumulus.Entities.Resource;
-
 import java.util.List;
 
 
 public class MigrationPlanner {
  private int migrationTime;
  private String migrationDifficulty;
- private List<Resource> keyResources;
+ private List<String> steps;
+ private List<List<String>> keyResources;
 
  public int getMigrationTime() {
   return migrationTime;
@@ -26,11 +25,19 @@ public class MigrationPlanner {
   this.migrationDifficulty = migrationDifficulty;
  }
 
- public List<Resource> getKeyResources() {
+ public List<String> getSteps() {
+  return steps;
+ }
+
+ public void setSteps(List<String> steps) {
+  this.steps = steps;
+ }
+
+ public List<List<String>> getKeyResources() {
   return keyResources;
  }
 
- public void setKeyResources(List<Resource> keyResources) {
+ public void setKeyResources(List<List<String>> keyResources) {
   this.keyResources = keyResources;
  }
 }
