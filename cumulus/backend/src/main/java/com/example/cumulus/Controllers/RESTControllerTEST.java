@@ -3,6 +3,7 @@ package com.example.cumulus.Controllers;
 import com.example.cumulus.DTOs.ChatGPTRequest;
 import com.example.cumulus.DTOs.ChatGPTResponse;
 import com.example.cumulus.Services.OpenAIAPIService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
@@ -25,5 +26,11 @@ public class RESTControllerTEST {
     @GetMapping("/getrequest")
     public String getRequest() {
         return "https://media-cldnry.s-nbcnews.com/image/upload/t_fit-1500w,f_auto,q_auto:best/msnbc/Components/Photos/070802/070802_orangutan_hmed_10a.jpg";
+    }
+
+    @GetMapping("/initialiseResources")
+    public Mono<ResponseEntity<?>> initialiseResources() throws InterruptedException {
+        Thread.sleep(3000);
+        return Mono.just(ResponseEntity.ok("Resources initialised successfully."));
     }
 }

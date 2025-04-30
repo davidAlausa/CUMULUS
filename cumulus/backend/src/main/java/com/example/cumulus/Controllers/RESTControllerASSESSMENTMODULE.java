@@ -1,6 +1,7 @@
 package com.example.cumulus.Controllers;
 
 import com.example.cumulus.DTOs.AssessmentResult;
+import com.example.cumulus.DTOs.MakeModuleDTO;
 import com.example.cumulus.DTOs.WorkStreamInput;
 import com.example.cumulus.Services.AssessmentResultService;
 import com.example.cumulus.Services.WorkstreamInputService;
@@ -25,7 +26,7 @@ public class RESTControllerASSESSMENTMODULE {
     @Autowired
     private WorkstreamInputService workStreamInputService;
 
-    @PostMapping("assessment-module")
+    /*@PostMapping("assessment-module")
     public Mono<ResponseEntity<?>> loadAssessmentModule(@RequestBody Map<String, String> payload) {
 
         String workstreamID = payload.get("workstreamID");
@@ -40,5 +41,18 @@ public class RESTControllerASSESSMENTMODULE {
                     response.put("inputs", tuple.getT2());
                     return ResponseEntity.ok(response);
                 });
+    }*/
+
+    @PostMapping("initialiseAssessmentModule")
+    public Mono<ResponseEntity<?>> initialiseAssessmentModule(@RequestBody MakeModuleDTO dto) {
+        return assessmentResultService.initialiseAssessmentModule(dto)
+                .map(result -> {
+                    if (result != null) {
+                        return ResponseEntity.ok(result);
+                    } else {
+                        return ResponseEntity.notFound().build();
+                    }
+                })
+                .defaultIfEmpty(ResponseEntity.notFound().build());
     }
 }
