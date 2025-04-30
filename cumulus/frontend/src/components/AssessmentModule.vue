@@ -6,28 +6,17 @@ export default {
 
     const querydata = this.$route.query.data ? JSON.parse(decodeURIComponent(this.$route.query.data)) : {};
 
-
     return {
-      workstreamID: querydata.workstreamID || "",
-      isWhole:0,
-      reason:"",
-      accessAmount:0,
-      sensitivityLevel:0,
-      isDirect:0,
-      isLocal:0,
-      importantAspect:"",
-      isMultiPlatform:0,
-      payPlan:0,
-      priority:"",
-      isConstant:0,
-      isAutomated:0,
+      providerID: querydata.providerId || "",
+      assessmentObject: querydata.assessmentOBJ || {},
+      providerObject: querydata.providerOBJ || {},
+      resourcesObject: querydata.resourceOBJ || {},
+
       cloudProvider: "",
-      justification:"",
-      initialCost:0,
-      costPerMonth:0,
+      justification: "",
+      costPerMonth: 0,
       migrationTime:0,
-      confidenceLevel:0,
-      confidenceReason:"",
+      confidenceReason:0,
 
       costBreakdown:[],
       priceSavings:null,
@@ -36,7 +25,7 @@ export default {
       keyResources:[[]],
       steps:[],
 
-      view: "AssessmentModule",
+      view: "Loading",
       boxView:-1,
     };
   },
@@ -48,17 +37,16 @@ export default {
       console.error('Error validating your token. Please log in again', error);
     }
 
-    console.log("The Workstream ID we collected is :", this.workstreamID + " if this is null, this is the AM's fault");
     this.fetchWorkstreamData();
   },
   methods: {
     async fetchWorkstreamData() {
       try {
-        const response = await fetch('http://localhost:8080/api/assessment-module', {
+        const response = await fetch('http://localhost:8080/api/initialiseAssessmentModule', {
           method: 'POST',
           headers: {  'Content-Type': 'application/json',
                       'Authorization': 'Bearer ' + localStorage.getItem('accessToken')},
-          body: JSON.stringify({ workstreamID: this.workstreamID })
+          body: JSON.stringify({providerId: this.providerID, assessment: this.assessmentObject, providersJ: this.providerObject, resources: this.resourcesObject}),
         });
 
         if (!response.ok) {
@@ -67,33 +55,21 @@ export default {
 
         const data = await response.json();
 
-        this.cloudProvider = data.workstream.assessmentModule.cloudProvider;
-        this.justification = data.workstream.assessmentModule.justification;
-        this.initialCost = data.workstream.costEstimator.initialCost;
-        this.costPerMonth = data.workstream.costEstimator.costPerMonth;
-        this.migrationTime = data.workstream.migrationPlanner.migrationTime;
-        this.confidenceLevel = data.workstream.justification.confidenceLevel;
-        this.confidenceReason = data.workstream.justification.confidenceReason;
+        console.log("Data received from server:", data);
 
-        this.costBreakdown = data.workstream.costEstimator.costBreakdown;
-        this.priceSavings = data.workstream.costEstimator.priceSavings;
+        this.cloudProvider = data.cloudProvider;
+        this.justification = data.justification;
+        this.costPerMonth = data.costEstimator.costPerMonth;
+        this.migrationTime = data.migrationPlanner.migrationTime;
+        this.confidenceReason = data.justification;
 
-        this.migrationDificulty = data.workstream.migrationPlanner.migrationDificulty;
-        this.keyResources = data.workstream.migrationPlanner.keyResources;
-        this.steps = data.workstream.migrationPlanner.steps;
+        this.costBreakdown = data.costEstimator.costBreakdown;
+        this.priceSavings = data.costEstimator.priceSavings;
 
-        this.isWhole = data.inputs.isWhole;
-        this.reason = data.inputs.reason;
-        this.accessAmount = data.inputs.accessAmount;
-        this.sensitivityLevel = data.inputs.sensitivityLevel;
-        this.isDirect = data.inputs.isDirect;
-        this.isLocal = data.inputs.isLocal;
-        this.importantAspect = data.inputs.importantAspect;
-        this.isMultiPlatform = data.inputs.isMultiPlatform;
-        this.payPlan = data.inputs.payPlan;
-        this.priority = data.inputs.priority;
-        this.isConstant = data.inputs.isConstant;
-        this.isAutomated = data.inputs.isAutomated;
+        this.migrationDificulty = data.migrationPlanner.migrationDifficulty;
+        this.keyResources = data.migrationPlanner.keyResources;
+
+        this.view = "AssessmentModule";
 
       } catch (error) {
         console.error("Error fetching workstream data:", error);
@@ -114,62 +90,21 @@ export default {
 
 <template>
   <div class="container-fluid">
+    <div v-if="view==='Loading'">
+      <h1>Loading...</h1>
+      <div class="buffering-animation"></div>
+    </div>
     <transition name="slide-fade">
     <div class="d-flex flex-wrap centered" v-if="view==='AssessmentModule'">
       <div class="card col-2 one">
         <div class="card-body">
           <h1>Inputs</h1>
           <hr>
-
-          <p>Question 1 - Is the workstream a whole business operation?</p>
-          <input type="text" class="form-control" :placeholder="convertToText(isWhole)" readonly>
-          <hr>
-
-          <p>Question 2 - What do you want the cloud to do for your workstream?</p>
-          <input type="text" class="form-control" :placeholder=reason readonly>
-          <hr>
-
-          <p>Question 3 - How many people will have access to backend operations?</p>
-          <input type="text" class="form-control" :placeholder=accessAmount readonly>
-          <hr>
-
-          <p>Question 4 - How sensitive is the information?</p>
-          <input type="text" class="form-control" :placeholder=sensitivityLevel readonly>
-          <hr>
-
-          <p>Question 5 - Will customers interact with this workstream directly?</p>
-          <input type="text" class="form-control" :placeholder="convertToText(isDirect)" readonly>
-          <hr>
-
-          <p>Question 6 - Will this workstream be accessed locally?</p>
-          <input type="text" class="form-control" :placeholder="convertToText(isLocal)" readonly>
-          <hr>
-
-          <p>Question 7 - What is the most important part?</p>
-          <input type="text" class="form-control" :placeholder=importantAspect readonly>
-          <hr>
-
-          <p>Question 8 - Will it interact with other applications?</p>
-          <input type="text" class="form-control" :placeholder="convertToText(isMultiPlatform)" readonly>
-          <hr>
-
-          <p>Question 9 - What pay plan suits you?</p>
-          <input type="text" class="form-control" :placeholder=payPlan readonly>
-          <hr>
-
-          <p>Question 10 - Cost or Operational Excellence?</p>
-          <input type="text" class="form-control" :placeholder=priority readonly>
-          <hr>
-
-          <p>Question 11 - Is it operational 24/7?</p>
-          <input type="text" class="form-control" :placeholder="convertToText(isConstant)" readonly>
-          <hr>
-
-          <p>Question 12 - Is it automated?</p>
-          <input type="text" class="form-control" :placeholder="convertToText(isAutomated)" readonly>
-          <hr>
-
-
+          <div v-for="(answer, questionId) in assessmentObject.questionAnswer" :key="questionId">
+            <p> {{questionId}} - {{ questionId }}</p>
+            <input type="text" class="form-control" :value="answer" readonly>
+            <hr>
+          </div>
         </div>
       </div>
 

@@ -8,6 +8,7 @@ export default {
     return {
       monkeyImage: null,
       gptResponse: "",
+      loading: false,
     };
   },
   methods: {
@@ -49,6 +50,19 @@ export default {
       } catch (error) {
         console.error("Error sending chatGPT prompt:", error);
       }
+    },
+    async startInitialise() {
+      this.loading = true;
+      try {
+        const response = await fetch("http://localhost:8080/api/test/initialiseResources");
+        if (!response.ok) {
+          throw new Error("Failed to initialise provider resources");
+        }
+      } catch (error) {
+        console.error("Error initialising provider resources:", error);
+      } finally {
+        this.loading = false;
+      }
     }
   },
 };
@@ -79,6 +93,21 @@ export default {
     <button type="submit">Send</button>
   </form>
   <textarea v-model="gptResponse"></textarea>
+
+  <br><hr><br>
+
+  <h2>InitialisingProviderResources</h2>
+  <div v-if="loading===false">
+    <button @click="startInitialise">Press Here To Start</button>
+  </div>
+
+  <div v-if="loading===true">
+    <button class="btn btn-primary">
+      <span class="spinner-border spinner-border-sm"></span>
+      Loading..
+    </button>
+  </div>
+
 </body>
 </template>
 

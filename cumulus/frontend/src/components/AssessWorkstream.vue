@@ -1,621 +1,464 @@
 <script>
 export default {
-  name: 'AssessWorkstream',
-  data() {
-    return {
+  name: "AssessWorkstream",
+  data(){
+    return{
       AWView: 1,
-      workstreamType: '',
-      createBy: '',
-      isWhole: 0,
-      reason: '',
-      accessAmount: '',
-      sensitivityLevel: 1,
-      isDirect: 0,
-      isLocal: 0,
-      importantAspect: '',
-      isMultiPlatform: 0,
-      payPlan: '',
-      priority: '',
-      isConstant: 0,
-      isAutomated: 0,
-
-      progress: 100/12,
+      QuestionNumber: 1,
+      slideDirection: 'forward',
+      progress1: 1,
+      progress2: 1,
+      progressSplit: 49,
+      progressSplit2: 0,
+      loading: 0,
+      QuestionType: "Core Questions",
+      help: "This is a hint to help you understand the question better.",
+      questionsObject:{}
     };
   },
-  methods: {
-    selectWorkstream(workstreamType) {
-      this.workstreamType = workstreamType;
-      this.nextForm();
+  methods:{
+    startAssessment(){
+      this.AWView=2;
+      this.getQuestions();
     },
-    selectCreateBy(createBy) {
-      this.createBy = createBy;
-      this.nextForm();
+
+    async getQuestions(){
+      try {
+        const response = await fetch("http://localhost:8080/api/getquestions", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            'Authorization': 'Bearer ' + localStorage.getItem('accessToken')
+          },
+        });
+        if (!response.ok) {
+          throw new Error("Failed to fetch questions");
+        }
+        const data = await response.json();
+        this.questionsObject = data.questions;
+        console.log(this.questionsObject);
+      } catch (error) {
+        console.error("Error fetching questions:", error);
+      }
     },
-    selectIsWhole(isWhole) {
-      this.isWhole = isWhole;
-      this.nextForm();
+
+    async sendQuestions(questionsObject){
+      try {
+        const response = await fetch("http://localhost:8080/api/sendfirstsix", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            'Authorization': 'Bearer ' + localStorage.getItem('accessToken')
+          },
+          body: JSON.stringify({ questions: questionsObject }),
+        });
+        if (!response.ok) {
+          throw new Error("Failed to submit questions");
+        }
+        const data = await response.json();
+        this.questionsObject = [...this.questionsObject, ...data.questions];
+        this.progressSplit2 = 50/(this.questionsObject.length-6);
+        console.log("Currently doing 50 divided by" + this.questionsObject.length + " - 6");
+        return true;
+        } catch (error) {
+        console.error("Error submitting questions:", error);
+      }
     },
-    selectReason() {
-      this.reason = document.getElementById('reason').value;
-      this.nextForm();
-    },
-    selectAccessAmount() {
-      this.accessAmount = document.getElementById('accessAmount').value;
-      this.nextForm();
-    },
-    selectSensitivityLevel() {
-      this.sensitivityLevel = document.getElementById('sensitivityLevel').value;
-      this.nextForm();
-    },
-    selectIsDirect(isDirect) {
-      this.isDirect = isDirect;
-      this.nextForm();
-    },
-    selectIsLocal(isLocal) {
-      this.isLocal = isLocal;
-      this.nextForm();
-    },
-    selectImportantAspect() {
-      this.importantAspect = document.getElementById('importantAspect').value;
-      this.nextForm();
-    },
-    selectIsMultiPlatform(multiPlatform) {
-      this.isMultiPlatform = multiPlatform;
-      this.nextForm();
-    },
-    selectPayPlan(payPlan) {
-      this.payPlan = payPlan;
-      this.nextForm();
-    },
-    selectPriority(priority) {
-      this.priority = priority;
-      this.nextForm();
-    },
-    selectIsConstant(constant) {
-      this.isConstant = constant;
-      this.nextForm();
-    },
-    selectIsAutomatic(automatic) {
-      this.isAutomated = automatic;
-      this.sendInputs();
-    },
-    nextForm() {
-      if (this.AWView > 2) {
-        this.progress = this.progress + 100/12;
+
+    async iterateQuestions(iterator) {
+      console.log("----------------------------------------START METHOD " + this.QuestionNumber + " ----------------------------------------");
+      iterator > 0 ? console.log("") : console.log("NOTE: BACK BUTTON WAS PRESSED");
+
+      this.QuestionNumber += iterator;
+
+
+      this.slideDirection = iterator > 0 ? 'forward' : 'backward';
+
+      if (this.QuestionNumber < 1) {
+        this.AWView = 1;
+        this.QuestionNumber = 1;
+        this.progress1 = 1;
+        this.progress2 = 1;
+        this.progressSplit = 49;
+        return;
       }
 
-      this.AWView = this.AWView + 1;
-      console.log(this.AWView + ' and ' + this.workstreamType + ' and ' + this.createBy + ' and ' + this.isWhole + ' and ' + this.reason + ' and ' + this.accessAmount + ' and ' + this.sensitivityLevel + ' and ' + this.isDirect + ' and ' + this.isLocal + ' and ' + this.importantAspect + ' and ' + this.isMultiPlatform + ' and ' + this.payPlan + ' and ' + this.priority + ' and ' + this.isConstant + ' and ' + this.isAutomated);
-    },
-    previousForm() {
-      this.progress = this.progress - 100/12;
-      this.AWView = this.AWView - 1;
-    },
-    sendInputs() {
+      if (this.QuestionType === "Core Questions") {
+        this.progress1 = iterator > 0 ? this.progress1 + 8.3 : this.progress1 - 8.3;
+        this.progressSplit = iterator > 0 ? this.progressSplit - 8.3 : this.progressSplit + 8.3;
 
-      if(this.accessAmount>100){
-        this.accessAmount = 100;
+        if (this.progressSplit < 0) {
+          this.progressSplit = 0;
+        }
+
+
+        if (this.QuestionNumber === 7 && iterator > 0) {
+
+          this.loading = 1;
+
+          const result = await this.sendQuestions(this.questionsObject);
+
+          if (result) {
+            this.QuestionType = "Follow Up Questions";
+            this.loading = 0;
+            this.QuestionNumber = 7;
+            this.AWView = 2;
+            this.progress1 = 50;
+            this.progress2 = 1;
+          } else {
+            console.error("Error sending questions");
+          }
+        }
+      } else {
+        console.log("I choose follow up questions");
+        this.progress2 = iterator > 0 ? this.progress2 + this.progressSplit2 : this.progress2 - this.progressSplit2;
+
+        if (this.QuestionNumber > this.questionsObject.length) {
+          this.$router.push({
+            name: 'ProcessWorkstream',
+            query: { data: encodeURIComponent(JSON.stringify(this.questionsObject)) }
+          });
+        }
       }
-      else if(this.accessAmount<1){
-        this.accessAmount = 1;
-      }
-
-      const formdata = {
-        model: "gpt-3.5-turbo",
-        messages: [{ role: "user", content: JSON.stringify({
-            workstreamType: this.workstreamType,
-            createBy: this.createBy,
-            isWhole: this.isWhole,
-            reason: this.reason,
-            accessAmount: this.accessAmount,
-            sensitivityLevel: this.sensitivityLevel,
-            isDirect: this.isDirect,
-            isLocal: this.isLocal,
-            importantAspect: this.importantAspect,
-            isMultiPlatform: this.isMultiPlatform,
-            payPlan: this.payPlan,
-            priority: this.priority,
-            isConstant: this.isConstant,
-            isAutomated: this.isAutomated,
-          }) }]
-      };
-
-      this.$router.push({
-        name: 'ProcessWorkstream',
-        query: { data: encodeURIComponent(JSON.stringify(formdata)) }
-      });
     },
-  },
+
+    populateQuestions(answer){
+      if (this.QuestionNumber - 1 < this.questionsObject.length) {
+        this.questionsObject[this.QuestionNumber - 1].answerText = answer;
+        if (answer === "Yes") {
+          this.questionsObject[this.QuestionNumber - 1].question.score+= 3;
+        }
+        else if(answer === "No"){
+          this.questionsObject[this.QuestionNumber - 1].question.score+= -3;
+        }
+        else if (answer === "Most Likely") {
+          this.questionsObject[this.QuestionNumber - 1].question.score+= 1;
+        }
+        else if (answer === "Most Likely Not") {
+          this.questionsObject[this.QuestionNumber - 1].question.score+= -1;
+        }
+        else if (answer === "I Don't Know") {
+          this.questionsObject[this.QuestionNumber - 1].question.score+= 0;
+        }
+        this.iterateQuestions(1);
+      }
+      else {
+        console.error("Question number out of bounds");
+      }
+    }
+  }
 }
 
 </script>
 
 <template>
-  <div class="container-fluid">
-    <div class="row top-header">
-      <div class="col-3">
-        <router-link to="/dashboard"><abbr title="Go Back To Dashboard"><span class="hvricn bi bi-arrow-left-short"></span></abbr></router-link>
+  <div class="div-assessworkstream">
+    <div class="container-fluid">
+
+      <div class="row top-header">
+        <div class="col-3">
+          <router-link to="/dashboard"><abbr title="Go Back To Dashboard"><span class="hvricn bi bi-arrow-left-short"></span></abbr></router-link>
+        </div>
+        <div class="col-9"></div>
       </div>
-      <div class="col-9"></div>
     </div>
 
-    <transition name="fade" mode="out-in">
-    <div class="centered" v-if="AWView===1">
-      <h1>What would you like to assess today?</h1>
-      <form @submit.prevent="nextForm">
-        <div class="row pick-workstream-type ">
-            <div class="col-sm-5">
-              <abbr title="Create a business workstream to assess business operations."><button class="btn" type="button" @click="selectWorkstream('Business')"><strong> A Business Component</strong></button></abbr>
+    <div class="body-content">
+
+      <transition :name="AWView === 2 ? 'fade-forward' : 'fade-backward'" mode="in-out">
+      <div class="assessmentpage-start" v-if="AWView===1">
+        <h1 class="assess-title">Assess Workstream</h1>
+        <p>Evaluate a new workstream based on your preferences and visualise a plan on how to make your project come to life!</p>
+        <div class="btn-choose row">
+          <div class="col-4"></div>
+          <div class="col-2 btn-div-1">
+            <button class="hvrbtn btn-1 btn si-submit-btn" @click="startAssessment"><strong>Start Assessment</strong></button>
+          </div>
+          <div class="col-2 btn-div-2">
+            <button type="button" class="hvrbtn btn-2 btn si-submit-btn" data-bs-toggle="modal" data-bs-target="#myModal"><strong>How Does It Work?</strong></button>
+          </div>
+
+          <div class="modal fade" id="myModal">
+            <div class="modal-dialog modal-xl modal-dialog-centered">
+              <div class="modal-content">
+
+                <div class="modal-header">
+                  <h4 class="modal-title">How the Assessment Module Works...</h4>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                  <ul class="list-group list-group-flush">
+                    <li class="list-group-item"><span class=" col-2 modal-icon bi bi-clipboard"></span> You will be asked 6 questions relating to the project your are assessing.</li>
+                    <li class="list-group-item"><span class=" col-2 modal-icon bi bi-hand-thumbs-up"></span> The answers to these questions are very simple. <strong class="color-green">"Yes"</strong>, <strong class="color-green">"No"</strong>, <strong class="color-green">"Most Likely"</strong>, <strong class="color-green">"Most Likely Not"</strong> or simply <strong class="color-green">"I Don't Know"</strong>!</li>
+                    <li class="list-group-item"><span class=" col-2 modal-icon bi bi-terminal"></span> Based on your answers, you may be asked more specific follow-up questions. This is to pinpoint exactly what you need!</li>
+                    <li class="list-group-item"><span class=" col-2 modal-icon bi bi-emoji-smile"></span> That's it! Sit back and let us figure out the hard parts for you.</li>
+                    <li class="list-group-item"><span class=" col-2 modal-icon bi bi-question-lg"></span> Still confused? That's alright. We have little hints to help explain questions in more detail. Just look for the <span class="modal-icon modal-icon-question bi bi-question-circle"></span> symbol.</li>
+                  </ul>
+                </div>
+
+                <!-- Modal footer -->
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Close</button>
+                </div>
+
+              </div>
             </div>
-            <div class="col-sm-2">
-              <p class="center-text"><strong>OR</strong></p>
+          </div>
+
+          <div class="col-4"></div>
+
+        </div>
+      </div>
+      </transition>
+
+      <transition :name="AWView === 2 ? 'fade-forward' : 'fade-backward'" mode="in-out">
+      <div class="assessmentpage-questions" v-if="AWView===2">
+        <div class="Questions-container" v-if="loading===0">
+          <transition :name="slideDirection === 'forward' ? 'slide-left' : 'slide-right'" mode="out-in">
+          <div class="Questions" :key="QuestionNumber">
+            <p>Question {{QuestionNumber}} - {{QuestionType}}</p>
+            <h1>{{questionsObject[QuestionNumber - 1]?.question.text}}</h1>
+          </div>
+          </transition>
+        </div>
+
+        <div class="Loading-container" v-if="loading===1">
+          <div class="Loading center">
+            <p class="center">Please wait a moment</p>
+            <h1>Loading Up Follow Up Questions...</h1>
+            <div class="spinner-border text-success" role="status">
+              <span class="visually-hidden ">Loading...</span>
             </div>
-            <div class="col-sm-5">
-              <abbr title="Create a project workstream to assess more personal project-based tasks."><button class="btn" type="button" @click="selectWorkstream('Project')"><strong> A Documented Project</strong></button></abbr>
-            </div>
-        </div>
-      </form>
-      <abbr title="Choose the type of workstream that best fits the description of the task you want to assess."><span class="bi bi-question-circle-fill"></span></abbr>
-    </div>
-    </transition>
-    <transition name="fade" mode="out-in">
-    <div class="centered" v-if="AWView===2">
-      <h1>Are You Building This From Scratch?</h1>
-      <form @submit.prevent="nextForm">
-        <div class="row pick-workstream-type ">
-          <div class="col-sm-5">
-            <abbr title="Create a custom workstream based on your inputs."><button class="btn" type="button" @click="selectCreateBy('self')"><strong>Assessing Workstream from scratch</strong></button></abbr>
-          </div>
-          <div class="col-sm-2">
-            <p class="center-text"><strong>OR</strong></p>
-          </div>
-          <div class="col-sm-5">
-            <abbr title="Create a custom workstream based on an existing one."><button class="btn" type="button" @click="selectCreateBy('template')"><strong>Assess based on a pre-made template</strong></button></abbr>
           </div>
         </div>
-      </form>
-      <button class="btn btn-link" @click="previousForm">Go back</button>
-      <abbr title="Choose whether to assess your task by answering a series of questions or by modifying a pre-existing workstream."><span class="bi bi-question-circle-fill"></span></abbr>
-    </div>
-    </transition>
 
-    <transition name="fade" mode="out-in">
-    <div class="centered" v-if="AWView===3">
-      <h1>Is the workstream a whole business or a partial workload?</h1>
-      <small><strong>Question 1 - Operational Excellence</strong></small>
-      <form @submit.prevent="nextForm">
-        <div class="row pick-workstream-type ">
-          <div class="col-sm-4">
-            <abbr title="Assess the entire business as a single entity"><button class="btn" type="button" @click="selectIsWhole(0)"><strong>Whole</strong></button></abbr>
-          </div>
-          <div class="col-sm-4">
-            <p class="center-text"><strong>OR</strong></p>
-          </div>
-          <div class="col-sm-4">
-            <abbr title="Assess a specific part or division of the business"><button class="btn" type="button" @click="selectIsWhole(1)"><strong>Partial</strong></button></abbr>
+        <div class="Answers" v-if="loading===0">
+          <div class="btn-group  btn-group-lg">
+            <button type="button" class="btn question-btn" @click="populateQuestions('Yes')">Yes</button>
+            <button type="button" class="btn question-btn" @click="populateQuestions('No')">No</button>
+            <button type="button" class="btn question-btn" @click="populateQuestions('I Don\'t Know')">I Don't Know</button>
+            <button type="button" class="btn question-btn" @click="populateQuestions('Most Likely')">Most Likely</button>
+            <button type="button" class="btn question-btn" @click="populateQuestions('Most Likely Not')">Most Likely Not</button>
           </div>
         </div>
-      </form>
-      <button class="btn btn-link" @click="previousForm">Go back</button>
 
-      <abbr title="Choose whether to do an assessment for a business as a whole or just a specific aspect of a business."><span class="bi bi-question-circle-fill"></span></abbr>
+        <div class="Answers" v-if="loading===1">
+          <div class="btn-group  btn-group-lg">
+            <button type="button" class="btn question-btn">Yes</button>
+            <button type="button" class="btn question-btn">No</button>
+            <button type="button" class="btn question-btn">I Don't Know</button>
+            <button type="button" class="btn question-btn">Most Likely</button>
+            <button type="button" class="btn question-btn">Most Likely Not</button>
+          </div>
+        </div>
 
-      <div class="progress">
-            <div :style="{ width: Math.round(progress)   + '%' }">
-              <div class="progress-bar">{{Math.round(progress) }}%</div>
-            </div>
+        <div class="HelpBack row">
+          <div class="col-4"></div>
+          <div class="col-2 goback">
+            <button type="button" class="btn btn-link" v-if="loading === 0 && QuestionNumber !== 7"><span class="bi bi-arrow-left-circle-fill" @click="iterateQuestions(-1)"></span></button>
+            <button type="button" class="btn btn-link" v-if="loading === 1 || QuestionNumber === 7"><span class="bi bi-arrow-left-circle-fill"  ></span></button>
+          </div>
+          <div class="col-2 helphint">
+            <span class="bi bi-question-circle-fill" data-bs-toggle="tooltip" title={{help}}></span>
+          </div>
+          <div class="col-4"></div>
+        </div>
+
+
+        <div class="Progress">
+          <div class="progress" style="height:50px">
+            <div class="progress-bar bg-success progress-bar-striped progress-bar-animated" :style="{ width: progress1 + '%' }"></div>
+            <div class="progress-bar bg-light progress-bar-striped progress-bar-animated" :style="{ width: progressSplit + '%' }"></div>
+            <div class="progress-bar bg-warning progress-bar-striped progress-bar-animated" :style="{ width: progress2 + '%' }"></div>
+          </div>
+        </div>
+
       </div>
-
+      </transition>
     </div>
-    </transition>
 
-    <transition name="fade" mode="out-in">
-    <div class="centered" v-if="AWView===4">
-      <h1>What do you want the cloud to do for your workstream?</h1>
-      <small><strong>Question 2 - Operational Excellence</strong></small>
-      <form @submit.prevent="nextForm" class="aw-form-textarea-div">
-        <div class="row pick-workstream-type aw-textarea-div">
-          <textarea class="form-control" placeholder="Enter Reason Here." name="reason" id="reason"  required></textarea>
-        </div>
-      </form>
-      <button class="btn rsn-btn" type="button" @click="selectReason">Submit</button>
-      <button class="btn btn-link" @click="previousForm">Go back</button>
-      <abbr title="Why are you assessing your task?"><span class="bi bi-question-circle-fill"></span></abbr>
-
-      <div class="progress">
-        <div :style="{ width: Math.round(progress)   + '%' }">
-          <div class="progress-bar">{{Math.round(progress) }}%</div>
-        </div>
-      </div>
-
-    </div>
-    </transition>
-
-    <transition name="fade" mode="out-in">
-    <div class="centered" v-if="AWView===5">
-      <h1>How many people will have access to your workstream?</h1>
-      <small><strong>Question 3 - Security</strong></small>
-      <form @submit.prevent="nextForm">
-        <div class="row pick-workstream-type ">
-          <input class="form-control" type="number" min="1" max="100" id="accessAmount" required>
-        </div>
-      </form>
-      <button class="btn rsn-btn" type="button" @click="selectAccessAmount">Submit</button>
-      <button class="btn btn-link" @click="previousForm">Go back</button>
-      <abbr title="How many people would roughly have access to what you are assessing today?"><span class="bi bi-question-circle-fill"></span></abbr>
-
-      <div class="progress">
-        <div :style="{ width: Math.round(progress)   + '%' }">
-          <div class="progress-bar">{{Math.round(progress) }}%</div>
-        </div>
-      </div>
-
-    </div>
-    </transition>
-
-    <transition name="fade" mode="out-in">
-    <div class="centered" v-if="AWView===6">
-      <h1>How sensitive is the data involved in your workstream?</h1>
-      <small><strong>Question 4 - Security</strong></small>
-      <form @submit.prevent="nextForm" class="sL-form">
-        <div class="row pick-workstream-type ">
-          <input type="range" v-model="sensitivityLevel" min="1" max="100" step="1" class="sensitivityLevel" id="sensitivityLevel">
-          <div class="d-flex justify-content-between">
-            <p class="p-left">Least sensitive</p>
-            <p class="p-right">Most sensitive</p>
-          </div>
-        </div>
-      </form>
-      <button class="btn rsn-btn" type="button" @click="selectSensitivityLevel">Submit</button>
-      <button class="btn btn-link" @click="previousForm">Go back</button>
-      <abbr title="Least sensitive to the most sensitive (Left -> Right)"><span class="bi bi-question-circle-fill"></span></abbr>
-
-      <div class="progress">
-        <div :style="{ width: Math.round(progress)   + '%' }">
-          <div class="progress-bar">{{Math.round(progress) }}%</div>
-        </div>
-      </div>
-
-    </div>
-    </transition>
-
-    <transition name="fade" mode="out-in">
-    <div class="centered" v-if="AWView===7">
-      <h1>Will customers interact with the workstream directly?</h1>
-      <small><strong>Question 5 - Reliablity</strong></small>
-      <form @submit.prevent="nextForm">
-        <div class="row pick-workstream-type">
-          <div class="col-sm-5">
-            <abbr title="Customers will interact directly with this workstream (e.g., a website or app interface)."><button class="btn" type="button" @click="selectIsDirect(0)">Yes</button></abbr>
-          </div>
-          <div class="col-sm-2">
-            <p class="center-text">OR</p>
-          </div>
-          <div class="col-sm-5">
-            <abbr title="Customers will not interact directly with this workstream (e.g., a background service or internal process)."><button class="btn" type="button" @click="selectIsDirect(1)">No</button></abbr>
-          </div>
-        </div>
-      </form>
-      <button class="btn btn-link" @click="previousForm">Go back</button>
-      <abbr title="Does this workstream have a customer-facing component (like a website), or does it operate in the background (like a database)?"><span class="bi bi-question-circle-fill"></span></abbr>
-
-      <div class="progress">
-        <div :style="{ width: Math.round(progress)   + '%' }">
-          <div class="progress-bar">{{Math.round(progress) }}%</div>
-        </div>
-      </div>
-
-    </div>
-    </transition>
-
-    <transition name="fade" mode="out-in">
-    <div class="centered" v-if="AWView===8">
-      <h1>Will your workstream serve local or international users?</h1>
-      <small><strong>Question 6 - Reliablity</strong></small>
-      <form @submit.prevent="nextForm">
-        <div class="row pick-workstream-type ">
-          <div class="col-sm-5">
-            <abbr title="Customers will be based in Ireland"><button class="btn" type="button" @click="selectIsLocal(0)">Local</button></abbr>
-          </div>
-          <div class="col-sm-2">
-            <p class="center-text"><strong>OR</strong></p>
-          </div>
-          <div class="col-sm-5">
-            <abbr title="Customers will be based worldwide"><button class="btn" type="button" @click="selectIsLocal(1)">International</button></abbr>
-          </div>
-        </div>
-      </form>
-      <button class="btn btn-link" @click="previousForm">Go back</button>
-      <abbr title="Where will the majority of the customer traffic come from?"><span class="bi bi-question-circle-fill"></span></abbr>
-
-      <div class="progress">
-        <div :style="{ width: Math.round(progress)   + '%' }">
-          <div class="progress-bar">{{Math.round(progress) }}%</div>
-        </div>
-      </div>
-
-    </div>
-    </transition>
-
-    <transition name="fade" mode="out-in">
-    <div class="centered" v-if="AWView===9">
-      <h1>What would you say is the most important aspect of your workstream operations?</h1>
-      <small><strong>Question 7 - Performance Efficiency</strong></small>
-      <form @submit.prevent="nextForm" class="aw-form-textarea-div">
-        <div class="row pick-workstream-type">
-          <textarea class="form-control" placeholder="Enter Reason Here." name="importantAspect" id="importantAspect" required></textarea>
-        </div>
-      </form>
-      <button class="btn rsn-btn" type="button" @click="selectImportantAspect">Submit</button>
-      <button class="btn btn-link" @click="previousForm">Go back</button>
-      <abbr title="What is the most important factor in regards to you workstream? (e.g saving cost, being automated)"><span class="bi bi-question-circle-fill"></span></abbr>
-
-      <div class="progress">
-        <div :style="{ width: Math.round(progress)   + '%' }">
-          <div class="progress-bar">{{Math.round(progress) }}%</div>
-        </div>
-      </div>
-
-    </div>
-    </transition>
-
-    <transition name="fade" mode="out-in">
-    <div class="centered" v-if="AWView===10">
-      <h1>Does your workstream interact with other systems?</h1>
-      <small><strong>Question 8 - Performance Efficiency</strong></small>
-      <form @submit.prevent="nextForm">
-        <div class="row pick-workstream-type ">
-          <div class="col-sm-5">
-            <abbr title="Yes, this workstream will talk to other apps and software"><button class="btn" type="button" @click="selectIsMultiPlatform(0)">Yes</button></abbr>
-          </div>
-          <div class="col-sm-2">
-            <p class="center-text">OR</p>
-          </div>
-          <div class="col-sm-5">
-            <abbr title="No, this workstream acts alone with my software only"><button class="btn" type="button" @click="selectIsMultiPlatform(1)">No</button></abbr>
-          </div>
-        </div>
-      </form>
-      <button class="btn btn-link" @click="previousForm">Go back</button>
-      <abbr title="What does your workstream connect to?"><span class="bi bi-question-circle-fill"></span></abbr>
-
-      <div class="progress">
-        <div :style="{ width: Math.round(progress)   + '%' }">
-          <div class="progress-bar">{{Math.round(progress) }}%</div>
-        </div>
-      </div>
-
-    </div>
-    </transition>
-
-    <transition name="fade" mode="out-in">
-    <div class="centered" v-if="AWView===11">
-      <h1>What pay plan would suit you?</h1>
-      <small><strong>Question 9 - Cost Optimisation</strong></small>
-      <form @submit.prevent="nextForm">
-        <div class="row pick-workstream-type ">
-          <div class="col-sm-3">
-            <abbr title="Paying as you use the software. Ideal for Short-term projects"><button class="btn" type="button" @click="selectPayPlan('PAYG')">Pay As You Go</button></abbr>
-          </div>
-          <div class="col-sm-1">
-            <p class="center-text">OR</p>
-          </div>
-          <div class="col-sm-3">
-            <abbr title="Commit to paying a discounted amount for 1-3 years usage"><button class="btn" type="button" @click="selectPayPlan('MDTM')">Over A Period Of Time</button></abbr>
-          </div>
-          <div class="col-sm-1">
-            <p class="center-text">OR</p>
-          </div>
-          <div class="col-sm-4">
-            <abbr title="Use Resources If Available. Though cheaper, performance may be impacted"><button class="btn" type="button" @click="selectPayPlan('SPRS')">Use Resources If Available</button></abbr>
-          </div>
-        </div>
-      </form>
-      <button class="btn btn-link" @click="previousForm">Go back</button>
-      <abbr title="What pay plan best suits you and your workstream?"><span class="bi bi-question-circle-fill"></span></abbr>
-
-      <div class="progress">
-        <div :style="{ width: Math.round(progress)   + '%' }">
-          <div class="progress-bar">{{Math.round(progress) }}%</div>
-        </div>
-      </div>
-
-    </div>
-    </transition>
-
-    <transition name="fade" mode="out-in">
-    <div class="centered" v-if="AWView===12">
-      <h1>What do you prioritise more?</h1>
-      <small><strong>Question 10 - Cost Optimisation</strong></small>
-      <form @submit.prevent="nextForm">
-        <div class="row pick-workstream-type ">
-          <div class="col-sm-5">
-            <abbr title="My workstream needs to be as cheap as possible"><button class="btn" type="button" @click="selectPriority('Cost')">Cost</button></abbr>
-          </div>
-          <div class="col-sm-2">
-            <p class="center-text">OR</p>
-          </div>
-          <div class="col-sm-5">
-            <abbr title="My workstream needs to work to the best of its ability"><button class="btn" type="button" @click="selectPriority('Operational Excellence')">Operational Excellence</button></abbr>
-          </div>
-        </div>
-      </form>
-      <button class="btn btn-link" @click="previousForm">Go back</button>
-      <abbr title="What would you prioritise more when assessing your workstream?"><span class="bi bi-question-circle-fill"></span></abbr>
-
-      <div class="progress">
-        <div :style="{ width: Math.round(progress)   + '%' }">
-          <div class="progress-bar">{{Math.round(progress) }}%</div>
-        </div>
-      </div>
-
-    </div>
-    </transition>
-
-    <transition name="fade" mode="out-in">
-    <div class="centered" v-if="AWView===13">
-      <h1>How often is you workstream supposed to be operational?</h1>
-      <small><strong>Question 11 - Sustainability</strong></small>
-      <form @submit.prevent="nextForm">
-        <div class="row pick-workstream-type ">
-          <div class="col-sm-5">
-            <abbr title="It needs to be online all the time"><button class="btn" type="button" @click="selectIsConstant(0)">24/7</button></abbr>
-          </div>
-          <div class="col-sm-2">
-            <p class="center-text">OR</p>
-          </div>
-          <div class="col-sm-5">
-            <abbr title="Only when needed (e.g work hours)"><button class="btn" type="button" @click="selectIsConstant(1)">A certain amount of hours</button></abbr>
-          </div>
-        </div>
-      </form>
-      <button class="btn btn-link" @click="previousForm">Go back</button>
-      <abbr title="How accessible do you need your workstream to be?"><span class="bi bi-question-circle-fill"></span></abbr>
-
-      <div class="progress">
-        <div :style="{ width: Math.round(progress)   + '%' }">
-          <div class="progress-bar">{{Math.round(progress) }}%</div>
-        </div>
-      </div>
-
-    </div>
-    </transition>
-
-    <transition name="fade" mode="out-in">
-    <div class="centered" v-if="AWView===14">
-      <h1>Do you prioritise automation or manual oversight?</h1>
-      <small><strong>Question 12 - Cost Optimisation</strong></small>
-      <form @submit.prevent="sendInputs">
-        <div class="row pick-workstream-type ">
-          <div class="col-sm-5">
-            <abbr title="My workstream needs to be able to work and think on its own"><button class="btn" type="button" @click="selectIsAutomatic(0)">Automation</button></abbr>
-          </div>
-          <div class="col-sm-2">
-            <p class="center-text">OR</p>
-          </div>
-          <div class="col-sm-5">
-            <abbr title="I want to have manual control over my workstream"><button class="btn" type="button" @click="selectIsAutomatic(1)">Manual Oversight</button></abbr>
-          </div>
-        </div>
-      </form>
-      <button class="btn btn-link" @click="previousForm">Go back</button>
-      <abbr title="How in dependent do you need your workstream to be?"><span class="bi bi-question-circle-fill"></span></abbr>
-
-      <div class="progress">
-        <div :style="{ width: Math.round(progress)   + '%' }">
-          <div class="progress-bar">{{Math.round(progress) }}%</div>
-        </div>
-      </div>
-
-    </div>
-    </transition>
   </div>
+
 </template>
 
 <style scoped>
-.container-fluid {
-  background-color: rgba(234, 208, 206, 0.98);
-}
-.centered {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  transition: opacity 0.25s ease-in-out;
-}
-
-h1 {
-  font-size: 4em;
-  color: #e43d40;
-  text-align: center;
-}
-small, p{
-  font-size: 1.2em;
-  color: #e43d40;
-}
-textarea, .form-control {
-  color: #e43d40;
-}
-.aw-form-textarea-div {
-  width: 50%;
-  text-align: center;
-  justify-content: center;
-  align-items: center;
-}
-.center-text {
-text-align: center;
-}
-.rsn-btn {
-  margin-top: 1em;
-}
-.bi {
-  color: #1e1f22;
-}
-.sL-form {
-  width: 50%;
-}
-.sensitivityLevel {
-  background: #E43D40;
+.color-green {
+  color: #047076;
 }
 .hvricn {
-  color: #E43D40;
+  color: #047076;
 }
-
 .hvricn:hover {
-  color: #FABEC0;
+  color: #E8EEF1;
 }
-.top-header{
-  height: 0;
-}
-
-.pick-workstream-type {
-  margin-top: 6em;
+.div-assessworkstream {
+  background-color: #DBEBED;
+  padding: 20px;
+  height: 100vh;
 }
 
-.btn {
-  background-color: #E43D40;
-  color: #FABEC0;
-  border: none;
-  margin-bottom: .5em;
+.btn-div-1, .btn-div-2, .goback, .helphint {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 2em;
 }
 
-.btn-link {
-  background-color: #F37970;
+.btn-1 {
+  background-color: #047076;
+  color: #DBEBED;
+  border-radius: 5px;
+  padding: 10px 20px;
 }
 
-.btn:hover {
-  background-color: #FABEC0;
-  color: #E43D40;
-  border: none;
+.btn-2, .question-btn{
+  background-color: #DBEBED;
+  color: #047076;
+  border-color: #10564F;
+  border-radius: 5px;
+  padding: 10px 20px;
 }
 
-.bi-question-circle-fill {
-  font-size: 3em;
-  color: #E43D40;
+.modal-icon {
+  color: #047076;
+  font-size: 1em;
+  margin-right: 1em;
 }
 
-.bi-question-circle-fill:hover {
-  color: #FABEC0;
+.modal-icon-question {
+  margin-right: 0;
+}
 
+.question-btn:hover {
+  background-color: #047076;
+  color: #DBEBED;
+}
+
+.Questions h1 {
+  font-size: 2.5em;
+  margin-top: 3em;
+  margin-bottom: 3em;
+}
+
+.Answers {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 2em;
+}
+
+.Progress {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 5em;
 }
 
 .progress {
-  width: 70%;
-  margin-top: 4em;
-  transition: width 0.5s ease;
+  width: 75%;
 }
+
 .progress-bar {
-  background-color: #E43D40;
+  transition: width 0.6s ease-in-out;
 }
-.p-left {
-  float: left;
-  justify-content: left;
-  text-align:  left;
+
+
+.bi-question-circle-fill, .bi-arrow-left-circle-fill {
+  color: #047076;
+  font-size: 2em;
 }
-.p-right {
-  float: right;
-  justify-content: right;
-  text-align:  right;
+
+.bi-arrow-left-circle-fill:hover{
+  color: #E8EEF1;
+}
+
+.fade-forward-enter-active {
+  transition: opacity 0.5s ease 0.5s;
+}
+.fade-forward-leave-active {
+  transition: opacity 0.5s ease;
+}
+.fade-forward-enter-from,
+.fade-forward-leave-to {
+  opacity: 0;
+}
+.fade-forward-enter-to,
+.fade-forward-leave-from {
+  opacity: 1;
+}
+
+.fade-backward-enter-active {
+  transition: opacity 0.5s ease;
+}
+.fade-backward-leave-active {
+  transition: opacity 0;
+}
+.fade-backward-enter-from,
+.fade-backward-leave-to {
+  opacity: 0;
+}
+.fade-backward-enter-to,
+.fade-backward-leave-from {
+  opacity: 1;
+}
+
+
+.Questions-container {
+  position: relative;
+  height: 200px; /* adjust as needed */
+  overflow: hidden;
+}
+
+.slide-left-enter-active,
+.slide-left-leave-active,
+.slide-right-enter-active,
+.slide-right-leave-active {
+  transition: all 0.4s ease;
+  position: absolute;
+  width: 100%;
+}
+
+.slide-left-enter-from {
+  transform: translateX(100%);
+  opacity: 0;
+}
+.slide-left-leave-to {
+  transform: translateX(-100%);
+  opacity: 0;
+}
+
+.slide-right-enter-from {
+  transform: translateX(-100%);
+  opacity: 0;
+}
+.slide-right-leave-to {
+  transform: translateX(100%);
+  opacity: 0;
+}
+
+.center {
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  margin-top: 2em;
+}
+
+/*-----------------------------------------------------------------*/
+h1 {
+  font-size: 5em;
+  color: #047076;
+  text-align: center;
+  margin-top: 1em;
+}
+h4 {
+  font-size: 2em;
+  color: #047076;
+}
+
+p{
+  color: #047076;
+  font-weight: bolder;
+  text-align: center;
 }
 </style>

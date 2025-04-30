@@ -12,6 +12,7 @@ import AssessWorkstream from "@/components/AssessWorkstream.vue";
 import ProcessWorkstream from "@/components/ProcessWorkstream.vue";
 import AssessmentModule from "@/components/AssessmentModule.vue";
 import FailedProcess from "@/components/FailedProcess.vue";
+import ViewAssessment from "@/components/ViewAssessment.vue";
 
 
 const routes = [
@@ -25,6 +26,7 @@ const routes = [
     { path: '/assess-workstream', component: AssessWorkstream},
     { path: '/process-workstream', name: 'ProcessWorkstream', component: ProcessWorkstream },
     { path: '/assessment-module', name: 'AssessmentModule', component: AssessmentModule},
+    { path: '/view-assessment', name: 'ViewAssessment', component: ViewAssessment},
     { path: '/failed-process', name: 'FailedProcess', component: FailedProcess},
     { path: '/:pathMatch(.*)*', redirect: '/' },
 ];
