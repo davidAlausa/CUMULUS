@@ -26,23 +26,6 @@ public class RESTControllerASSESSMENTMODULE {
     @Autowired
     private WorkstreamInputService workStreamInputService;
 
-    /*@PostMapping("assessment-module")
-    public Mono<ResponseEntity<?>> loadAssessmentModule(@RequestBody Map<String, String> payload) {
-
-        String workstreamID = payload.get("workstreamID");
-
-        Mono<AssessmentResult> workstreamMono = assessmentResultService.getWorkstreamByID(workstreamID);
-        Mono<WorkStreamInput> workStreamInputMono = workStreamInputService.getWorkstreamInputByWorkstreamID(workstreamID);
-
-        return Mono.zip(workstreamMono, workStreamInputMono)
-                .map(tuple -> {
-                    Map<String, Object> response = new HashMap<>();
-                    response.put("workstream", tuple.getT1());
-                    response.put("inputs", tuple.getT2());
-                    return ResponseEntity.ok(response);
-                });
-    }*/
-
     @PostMapping("initialiseAssessmentModule")
     public Mono<ResponseEntity<?>> initialiseAssessmentModule(@RequestBody MakeModuleDTO dto) {
         return assessmentResultService.initialiseAssessmentModule(dto)

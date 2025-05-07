@@ -92,7 +92,6 @@ public class AssessmentService {
                             .filter(question -> "Standard".equalsIgnoreCase(question.getType()))
                             .collectList();
                 })
-
                 .map(standardQuestions -> {
                     List<Question> sortedStandard = standardQuestions.stream()
                             .sorted(Comparator.comparingInt(Question::getScore).reversed())
@@ -106,10 +105,8 @@ public class AssessmentService {
                                 return qdto;
                             })
                             .collect(Collectors.toList());
-
                     AssessmentDTO secondBatchDTO = new AssessmentDTO();
                     secondBatchDTO.setQuestions(secondBatch);
-
                     return secondBatchDTO;
                 });
     }

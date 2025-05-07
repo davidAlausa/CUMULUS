@@ -59,18 +59,11 @@ public class WorkstreamInputService {
                 });
     }
 
-
-    public Mono<WorkStreamInput> getWorkstreamInputByWorkstreamID(String workstreamID) {
-        return workstreamInputRepository.findWorkStreamInputByWorkstreamID(workstreamID);
-    }
-
     public Mono<Map<String, String>> calculateProviderResources(
             Map<String, Integer> providerScores, List<String> userAttributeIds) {
-
         List<Mono<Map<String, String>>> providerResults = providerScores.entrySet().stream()
                 .map(entry -> {
                     String providerId = entry.getKey();
-
                     return resourceRepository.findByProviderId(providerId)
                             .filter(resource -> List.of("Compute", "Storage", "Database")
                                     .contains(resource.getCategory()))
@@ -80,7 +73,6 @@ public class WorkstreamInputService {
                                         .map(categoryEntry -> {
                                             String category = categoryEntry.getKey();
                                             List<Resource> resourcesInCategory = (List<Resource>) categoryEntry.getValue();
-
                                             return Flux.fromIterable(resourcesInCategory)
                                                     .flatMap(resource -> resourceAttributeRepository.findByResourceId(resource.getId())
                                                             .map(attr -> {
@@ -96,7 +88,6 @@ public class WorkstreamInputService {
                                                             .orElse(null));
                                         })
                                         .collect(Collectors.toList());
-
                                 return Flux.merge(categoryBestResources)
                                         .filter(Objects::nonNull)
                                         .collectMap(Map.Entry::getKey, Map.Entry::getValue);

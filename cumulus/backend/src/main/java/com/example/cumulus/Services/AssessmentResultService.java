@@ -32,27 +32,11 @@ public class AssessmentResultService {
         this.resourceRepository = resourceRepository;
     }
 
-    /*public Mono<String> process(AssessmentResult workstream, String userId) {
-        if (workstream == null) {
-            return Mono.empty();
-        }
-
-        workstream.setUserID(userId);
-        workstream.setDateAssessed(Instant.now());
-
-        System.out.println("Saving Workstream: " + workstream);
-
-        return repository.save(workstream)
-                .doOnSuccess(saved -> System.out.println("Saved Successfully: " + saved))
-                .doOnError(error -> System.err.println("Error Saving: " + error.getMessage()))
-                .map(AssessmentResult::getId)
-                .switchIfEmpty(Mono.error(new RuntimeException("Failed to process workstream.")));
-    }*/
     public Mono<Map<String, Object>> processAssessment(AssessmentDTO dto) {
         System.out.println("Received AssessmentDTO: " + dto);
 
         List<QuestionDTO> top6Questions = dto.getQuestions().stream()
-                .sorted(Comparator.comparingInt(q -> -q.getQuestion().getScore())) // Descending
+                .sorted(Comparator.comparingInt(q -> -q.getQuestion().getScore()))
                 .limit(6)
                 .toList();
 
@@ -103,7 +87,6 @@ public class AssessmentResultService {
                     assessmentModule.setCloudProvider(provider.getName());
                     assessmentModule.setProviderDescription(description);
 
-                    // Cost Estimation
                     double costPerMonth = 0.0;
                     List<HashMap<?, ?>> details = new ArrayList<>();
                     Map<String, Double> priceSavings = new HashMap<>();
